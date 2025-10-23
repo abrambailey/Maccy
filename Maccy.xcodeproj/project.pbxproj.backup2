@@ -16,9 +16,6 @@
 		2FA81FE02E43D9B700C12F92 /* Dictionary+RemoveItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FA81FDF2E43D9A600C12F92 /* Dictionary+RemoveItem.swift */; };
 		2FB5BCA02CD8F73F008B33F4 /* ApplicationImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB5BC9F2CD8F73C008B33F4 /* ApplicationImage.swift */; };
 		4762D6972467226100B3A2BA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4762D6992467226100B3A2BA /* Localizable.strings */; };
-		A433EA012EAA3BF100F7CBD4 /* ViewMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A433EA002EAA3BF100F7CBD4 /* ViewMode.swift */; };
-		A433EA042EAA3C1100F7CBD4 /* HistoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A433EA032EAA3C1100F7CBD4 /* HistoryCardView.swift */; };
-		A433EA052EAA3C1100F7CBD4 /* FilmstripLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A433EA022EAA3C1100F7CBD4 /* FilmstripLayoutView.swift */; };
 		DA009931256411F90030E697 /* appcast.xml in Resources */ = {isa = PBXBuildFile; fileRef = DA00992C256411F90030E697 /* appcast.xml */; };
 		DA009932256411F90030E697 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DA00992D256411F90030E697 /* README.md */; };
 		DA009934256411F90030E697 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = DA00992F256411F90030E697 /* LICENSE */; };
@@ -184,9 +181,6 @@
 		5212BB6C2E59AA5200E74A24 /* ckb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ckb; path = ckb.lproj/PreviewItemView.strings; sourceTree = "<group>"; };
 		5212BB6D2E59AA5200E74A24 /* ckb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ckb; path = ckb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7CEEFDF124F41F8500ECAD2A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		A433EA002EAA3BF100F7CBD4 /* ViewMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/ViewMode.swift; sourceTree = "<group>"; };
-		A433EA022EAA3C1100F7CBD4 /* FilmstripLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/Views/FilmstripLayoutView.swift; sourceTree = "<group>"; };
-		A433EA032EAA3C1100F7CBD4 /* HistoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/Views/HistoryCardView.swift; sourceTree = "<group>"; };
 		ABC72863283A9053001EE086 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
 		DA00992C256411F90030E697 /* appcast.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = appcast.xml; sourceTree = "<group>"; };
 		DA00992D256411F90030E697 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -732,9 +726,6 @@
 		DAEE383A1E3DBEB100DD2966 = {
 			isa = PBXGroup;
 			children = (
-				A433EA022EAA3C1100F7CBD4 /* FilmstripLayoutView.swift */,
-				A433EA032EAA3C1100F7CBD4 /* HistoryCardView.swift */,
-				A433EA002EAA3BF100F7CBD4 /* ViewMode.swift */,
 				DAEE38451E3DBEB100DD2966 /* Maccy */,
 				DA360DB11E3DF137005C6F6B /* MaccyTests */,
 				DA0EE7B7204657830025FC60 /* MaccyUITests */,
@@ -1042,7 +1033,6 @@
 				DAA072E72C423617006DDFD2 /* NSSize+DefaultsSerializable.swift in Sources */,
 				DA9C3C452C207AF80056795D /* IgnoreSettingsPane.swift in Sources */,
 				DA13D7D82C1A223E00FA9E23 /* Select.swift in Sources */,
-				A433EA012EAA3BF100F7CBD4 /* ViewMode.swift in Sources */,
 				DA689FC82C1D15140009B887 /* PinsPosition.swift in Sources */,
 				DA13D7D92C1A223E00FA9E23 /* Get.swift in Sources */,
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
@@ -1098,8 +1088,6 @@
 				DA9C3C602C20E1890056795D /* IgnorePasteboardTypesSettingsView.swift in Sources */,
 				DA083A6E2C42E8E8004259A0 /* NSImage+Resized.swift in Sources */,
 				DAA072E12C41C6E8006DDFD2 /* FooterView.swift in Sources */,
-				A433EA042EAA3C1100F7CBD4 /* HistoryCardView.swift in Sources */,
-				A433EA052EAA3C1100F7CBD4 /* FilmstripLayoutView.swift in Sources */,
 				2F1A79C02C6DFB7800C98EBD /* SearchVisibility.swift in Sources */,
 				DAA072DD2C41C61F006DDFD2 /* FooterItemView.swift in Sources */,
 				DA3EAE0C2AE30F7500F39108 /* NSApplication+Windows.swift in Sources */,

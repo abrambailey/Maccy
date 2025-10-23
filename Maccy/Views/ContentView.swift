@@ -1,3 +1,4 @@
+import Defaults
 import SwiftData
 import SwiftUI
 
@@ -7,6 +8,7 @@ struct ContentView: View {
   @State private var scenePhase: ScenePhase = .background
 
   @FocusState private var searchFocused: Bool
+  @Default(.viewMode) private var viewMode
 
   var body: some View {
     ZStack {
@@ -19,7 +21,7 @@ struct ContentView: View {
             searchQuery: $appState.history.searchQuery
           )
 
-          HistoryListView(
+          FilmstripLayoutView(
             searchQuery: $appState.history.searchQuery,
             searchFocused: $searchFocused
           )
@@ -29,6 +31,7 @@ struct ContentView: View {
       }
       .animation(.default.speed(3), value: appState.history.items)
       .animation(.easeInOut(duration: 0.2), value: appState.searchVisible)
+      .animation(.easeInOut(duration: 0.3), value: viewMode)
       .padding(.horizontal, 5)
       .padding(.vertical, appState.popup.verticalPadding)
       .onAppear {

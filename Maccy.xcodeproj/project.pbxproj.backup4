@@ -184,9 +184,9 @@
 		5212BB6C2E59AA5200E74A24 /* ckb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ckb; path = ckb.lproj/PreviewItemView.strings; sourceTree = "<group>"; };
 		5212BB6D2E59AA5200E74A24 /* ckb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ckb; path = ckb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7CEEFDF124F41F8500ECAD2A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		A433EA002EAA3BF100F7CBD4 /* ViewMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/ViewMode.swift; sourceTree = "<group>"; };
-		A433EA022EAA3C1100F7CBD4 /* FilmstripLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/Views/FilmstripLayoutView.swift; sourceTree = "<group>"; };
-		A433EA032EAA3C1100F7CBD4 /* HistoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maccy/Views/HistoryCardView.swift; sourceTree = "<group>"; };
+		A433EA002EAA3BF100F7CBD4 /* ViewMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewMode.swift; sourceTree = "<group>"; };
+		A433EA022EAA3C1100F7CBD4 /* FilmstripLayoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmstripLayoutView.swift; sourceTree = "<group>"; };
+		A433EA032EAA3C1100F7CBD4 /* HistoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryCardView.swift; sourceTree = "<group>"; };
 		ABC72863283A9053001EE086 /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
 		DA00992C256411F90030E697 /* appcast.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = appcast.xml; sourceTree = "<group>"; };
 		DA00992D256411F90030E697 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };

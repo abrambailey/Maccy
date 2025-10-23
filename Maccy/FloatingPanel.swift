@@ -69,7 +69,14 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
   }
 
   func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
-    setContentSize(NSSize(width: frame.width, height: min(height, Defaults[.windowSize].height)))
+    var windowSize = Defaults[.windowSize]
+
+    // Use full screen width for topCenter position
+    if popupPosition == .topCenter, let screen = NSScreen.forPopup {
+      windowSize.width = screen.visibleFrame.width
+    }
+
+    setContentSize(NSSize(width: windowSize.width, height: min(height, windowSize.height)))
     setFrameOrigin(popupPosition.origin(size: frame.size, statusBarButton: statusBarButton))
     orderFrontRegardless()
     makeKey()
@@ -86,8 +93,18 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     var newSize = Defaults[.windowSize]
     newSize.height = min(newHeight, newSize.height)
 
+    // Maintain full screen width for topCenter position
+    if Defaults[.popupPosition] == .topCenter, let screen = NSScreen.forPopup {
+      newSize.width = screen.visibleFrame.width
+    }
+
     var newOrigin = frame.origin
     newOrigin.y += (frame.height - newSize.height)
+
+    // Keep x position at left edge for topCenter
+    if Defaults[.popupPosition] == .topCenter, let screen = NSScreen.forPopup {
+      newOrigin.x = screen.visibleFrame.minX
+    }
 
     NSAnimationContext.runAnimationGroup { (context) in
       context.duration = 0.2

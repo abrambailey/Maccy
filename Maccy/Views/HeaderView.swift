@@ -9,6 +9,8 @@ struct HeaderView: View {
   @Environment(\.scenePhase) private var scenePhase
 
   @Default(.showTitle) private var showTitle
+  @State private var localQuery: String = ""
+  @State private var debounceTask: Task<Void, Never>?
 
   var body: some View {
     HStack {
@@ -17,11 +19,21 @@ struct HeaderView: View {
           .foregroundStyle(.secondary)
       }
 
-      SearchFieldView(placeholder: "search_placeholder", query: $searchQuery)
+      SearchFieldView(placeholder: "search_placeholder", query: $localQuery)
         .focused($searchFocused)
         .frame(maxWidth: .infinity)
+        .onChange(of: localQuery) { oldValue, newValue in
+          debounceTask?.cancel()
+          debounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            if !Task.isCancelled {
+              searchQuery = newValue
+            }
+          }
+        }
         .onChange(of: scenePhase) {
-          if scenePhase == .background && !searchQuery.isEmpty {
+          if scenePhase == .background && !localQuery.isEmpty {
+            localQuery = ""
             searchQuery = ""
           }
         }

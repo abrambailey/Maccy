@@ -58,7 +58,7 @@ class History { // swiftlint:disable:this type_body_length
 
   private let search = Search()
   private let sorter = Sorter()
-  private let throttler = Throttler(minimumDelay: 0.2)
+  private let throttler = Throttler(minimumDelay: 0.8)
 
   @ObservationIgnored
   private var sessionLog: [Int: HistoryItem] = [:]
