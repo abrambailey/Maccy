@@ -4,6 +4,7 @@ import Defaults
 extension NSPasteboard.PasteboardType: Defaults.Serializable {
   static let heic = NSPasteboard.PasteboardType(rawValue: "public.heic")
   static let jpeg = NSPasteboard.PasteboardType(rawValue: "public.jpeg")
+  static let png = NSPasteboard.PasteboardType(rawValue: "public.png")
   static let universalClipboard = NSPasteboard.PasteboardType(rawValue: "com.apple.is-remote-clipboard")
 
   // See http://nspasteboard.org for more details.
