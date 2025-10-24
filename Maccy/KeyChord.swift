@@ -75,6 +75,8 @@ enum KeyChord: CaseIterable {
       self = .deleteLastWordFromSearch
     case (.downArrow, []),
          (.downArrow, [.shift]),
+         (.rightArrow, []),
+         (.rightArrow, [.shift]),
          (.n, [.control]),
          (.n, [.control, .shift]),
          (.j, [.control]):
@@ -85,6 +87,8 @@ enum KeyChord: CaseIterable {
       self = .moveToLast
     case (.upArrow, []),
          (.upArrow, [.shift]),
+         (.leftArrow, []),
+         (.leftArrow, [.shift]),
          (.p, [.control]),
          (.p, [.control, .shift]),
          (.k, [.control]):

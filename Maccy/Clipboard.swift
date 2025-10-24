@@ -195,6 +195,12 @@ class Clipboard {
         return
       }
 
+      // Skip empty images (e.g., Discord's 0-byte TIFF when switching apps)
+      let imageTypes: Set<NSPasteboard.PasteboardType> = [.png, .tiff, .jpeg, .heic]
+      if !types.isDisjoint(with: imageTypes) && isEmptyImage(item) {
+        return
+      }
+
       if shouldIgnore(item) {
         return
       }
@@ -212,7 +218,9 @@ class Clipboard {
       }
 
       types.forEach { type in
-        contents.append(HistoryItemContent(type: type.rawValue, value: item.data(forType: type)))
+        if let data = item.data(forType: type), !data.isEmpty {
+          contents.append(HistoryItemContent(type: type.rawValue, value: data))
+        }
       }
     })
 
@@ -268,6 +276,20 @@ class Clipboard {
     }
 
     return string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  private func isEmptyImage(_ item: NSPasteboardItem) -> Bool {
+    let imageTypes: [NSPasteboard.PasteboardType] = [.png, .tiff, .jpeg, .heic]
+
+    for imageType in imageTypes {
+      if let data = item.data(forType: imageType) {
+        // If we have image data but it's empty or near-empty, consider it empty
+        return data.isEmpty || data.count < 10
+      }
+    }
+
+    // No image data found at all
+    return true
   }
 
   private func richText(_ item: NSPasteboardItem) -> Bool {

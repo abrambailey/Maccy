@@ -9,14 +9,87 @@ struct HeaderView: View {
   @Environment(\.scenePhase) private var scenePhase
 
   @Default(.showTitle) private var showTitle
+  @Default(.suppressClearAlert) private var suppressClearAlert
   @State private var localQuery: String = ""
   @State private var debounceTask: Task<Void, Never>?
 
   var body: some View {
     HStack {
       if showTitle {
-        Text("Maccy")
-          .foregroundStyle(.secondary)
+        Menu {
+          Button("clear") {
+            Task { @MainActor in
+              if !suppressClearAlert {
+                let alert = NSAlert()
+                alert.messageText = NSLocalizedString("clear_alert_message", comment: "")
+                alert.informativeText = NSLocalizedString("clear_alert_comment", comment: "")
+                alert.addButton(withTitle: NSLocalizedString("clear_alert_confirm", comment: ""))
+                alert.addButton(withTitle: NSLocalizedString("clear_alert_cancel", comment: ""))
+                alert.showsSuppressionButton = true
+
+                let response = alert.runModal()
+                if alert.suppressionButton?.state == .on {
+                  suppressClearAlert = true
+                }
+
+                if response == .alertFirstButtonReturn {
+                  appState.history.clear()
+                }
+              } else {
+                appState.history.clear()
+              }
+            }
+          }
+
+          Button("clear_all") {
+            Task { @MainActor in
+              if !suppressClearAlert {
+                let alert = NSAlert()
+                alert.messageText = NSLocalizedString("clear_alert_message", comment: "")
+                alert.informativeText = NSLocalizedString("clear_alert_comment", comment: "")
+                alert.addButton(withTitle: NSLocalizedString("clear_alert_confirm", comment: ""))
+                alert.addButton(withTitle: NSLocalizedString("clear_alert_cancel", comment: ""))
+                alert.showsSuppressionButton = true
+
+                let response = alert.runModal()
+                if alert.suppressionButton?.state == .on {
+                  suppressClearAlert = true
+                }
+
+                if response == .alertFirstButtonReturn {
+                  appState.history.clearAll()
+                }
+              } else {
+                appState.history.clearAll()
+              }
+            }
+          }
+
+          Divider()
+
+          Button("preferences") {
+            Task { @MainActor in
+              appState.openPreferences()
+            }
+          }
+
+          Button("about") {
+            appState.openAbout()
+          }
+
+          Divider()
+
+          Button("quit") {
+            Task { @MainActor in
+              appState.quit()
+            }
+          }
+        } label: {
+          Image(systemName: "line.3.horizontal")
+            .foregroundStyle(.secondary)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
       }
 
       SearchFieldView(placeholder: "search_placeholder", query: $localQuery)

@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     statusItem.button?.image = Defaults[.menuIcon].image
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.target = self
+    statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
     return statusItem
   }()
 
@@ -141,6 +142,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   @objc
   private func performStatusItemClick() {
     if let event = NSApp.currentEvent {
+      // Right-click shows menu
+      if event.type == .rightMouseUp {
+        showStatusItemMenu()
+        return
+      }
+
       let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
       if modifierFlags.contains(.option) {
@@ -157,6 +164,63 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     panel.toggle(height: AppState.shared.popup.height, at: .statusItem)
   }
 
+  private func showStatusItemMenu() {
+    let menu = NSMenu()
+
+    // Clear
+    let clearItem = NSMenuItem(
+      title: NSLocalizedString("clear", comment: "Clear menu item"),
+      action: #selector(performClear),
+      keyEquivalent: ""
+    )
+    clearItem.target = self
+    menu.addItem(clearItem)
+
+    // Clear All
+    let clearAllItem = NSMenuItem(
+      title: NSLocalizedString("clear_all", comment: "Clear All menu item"),
+      action: #selector(performClearAll),
+      keyEquivalent: ""
+    )
+    clearAllItem.target = self
+    menu.addItem(clearAllItem)
+
+    menu.addItem(NSMenuItem.separator())
+
+    // Preferences
+    let preferencesItem = NSMenuItem(
+      title: NSLocalizedString("preferences", comment: "Preferences menu item"),
+      action: #selector(performPreferences),
+      keyEquivalent: ""
+    )
+    preferencesItem.target = self
+    menu.addItem(preferencesItem)
+
+    // About
+    let aboutItem = NSMenuItem(
+      title: NSLocalizedString("about", comment: "About menu item"),
+      action: #selector(performAbout),
+      keyEquivalent: ""
+    )
+    aboutItem.target = self
+    menu.addItem(aboutItem)
+
+    menu.addItem(NSMenuItem.separator())
+
+    // Quit
+    let quitItem = NSMenuItem(
+      title: NSLocalizedString("quit", comment: "Quit menu item"),
+      action: #selector(performQuit),
+      keyEquivalent: ""
+    )
+    quitItem.target = self
+    menu.addItem(quitItem)
+
+    statusItem.menu = menu
+    statusItem.button?.performClick(nil)
+    statusItem.menu = nil
+  }
+
   private func synchronizeMenuIconText() {
     _ = withObservationTracking {
       AppState.shared.menuIconText
@@ -166,6 +230,79 @@ class AppDelegate: NSObject, NSApplicationDelegate {
           self.statusItem.button?.title = AppState.shared.menuIconText
         }
         self.synchronizeMenuIconText()
+      }
+    }
+  }
+
+  @objc
+  private func performAbout() {
+    Task { @MainActor in
+      AppState.shared.openAbout()
+    }
+  }
+
+  @objc
+  private func performPreferences() {
+    Task { @MainActor in
+      AppState.shared.openPreferences()
+    }
+  }
+
+  @objc
+  private func performQuit() {
+    Task { @MainActor in
+      AppState.shared.quit()
+    }
+  }
+
+  @objc
+  private func performClear() {
+    Task { @MainActor in
+      // Show confirmation if needed
+      if !Defaults[.suppressClearAlert] {
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("clear_alert_message", comment: "")
+        alert.informativeText = NSLocalizedString("clear_alert_comment", comment: "")
+        alert.addButton(withTitle: NSLocalizedString("clear_alert_confirm", comment: ""))
+        alert.addButton(withTitle: NSLocalizedString("clear_alert_cancel", comment: ""))
+        alert.showsSuppressionButton = true
+
+        let response = alert.runModal()
+        if alert.suppressionButton?.state == .on {
+          Defaults[.suppressClearAlert] = true
+        }
+
+        if response == .alertFirstButtonReturn {
+          AppState.shared.history.clear()
+        }
+      } else {
+        AppState.shared.history.clear()
+      }
+    }
+  }
+
+  @objc
+  private func performClearAll() {
+    Task { @MainActor in
+      // Show confirmation if needed
+      if !Defaults[.suppressClearAlert] {
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("clear_alert_message", comment: "")
+        alert.informativeText = NSLocalizedString("clear_alert_comment", comment: "")
+        alert.addButton(withTitle: NSLocalizedString("clear_alert_confirm", comment: ""))
+        alert.addButton(withTitle: NSLocalizedString("clear_alert_cancel", comment: ""))
+        alert.showsSuppressionButton = true
+
+        let response = alert.runModal()
+        if alert.suppressionButton?.state == .on {
+          Defaults[.suppressClearAlert] = true
+        }
+
+        if response == .alertFirstButtonReturn {
+          AppState.shared.history.clearAll()
+        }
+      } else {
+        AppState.shared.history.clearAll()
       }
     }
   }
