@@ -81,7 +81,7 @@ struct HistoryCardView: View {
         Image(nsImage: thumbnailImage)
           .resizable()
           .aspectRatio(contentMode: .fit)
-          .frame(maxHeight: cardHeight - 80)
+          .frame(maxWidth: .infinity, maxHeight: cardHeight - 80)
           .clipped()
       } else {
         // Text content with highlighting

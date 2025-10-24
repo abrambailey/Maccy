@@ -45,4 +45,5 @@ reset-permissions: clean
 clean:
 	@echo "Stopping Maccy..."
 	@killall Maccy 2>/dev/null || true
+	@pkill -9 Maccy 2>/dev/null || true
 	@sleep 0.5
