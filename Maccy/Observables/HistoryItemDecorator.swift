@@ -17,6 +17,7 @@ class HistoryItemDecorator: Identifiable, Hashable {
   let id = UUID()
 
   var title: String = ""
+  var searchableText: String = "" // Cached for search performance
   var attributedTitle: AttributedString?
 
   var isVisible: Bool = true
@@ -74,6 +75,7 @@ class HistoryItemDecorator: Identifiable, Hashable {
     self.item = item
     self.shortcuts = shortcuts
     self.title = item.title
+    self.searchableText = item.previewableText.shortened(to: 10_000)
     self.applicationImage = ApplicationImageCache.shared.getImage(item: item)
 
     synchronizeItemPin()
