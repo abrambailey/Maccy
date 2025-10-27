@@ -14,11 +14,16 @@ help:
 	@echo "  make clean              - Kill running Maccy instances"
 
 dev: clean build
+	@echo "Clearing login items..."
+	@osascript -e 'tell application "System Events" to delete login item "Maccy"' 2>/dev/null || true
 	@echo "Resetting accessibility permissions..."
 	@tccutil reset Accessibility $(BUNDLE_ID) 2>/dev/null || true
 	@sleep 1
 	@echo "Launching Maccy (will prompt for accessibility)..."
 	@open $(APP_PATH)
+	@sleep 2
+	@echo "Adding login item..."
+	@osascript -e 'tell application "System Events" to make login item at end with properties {path:"$(APP_PATH)", hidden:false}' 2>/dev/null || true
 	@echo "✓ Done! Grant accessibility permissions when prompted."
 
 build:

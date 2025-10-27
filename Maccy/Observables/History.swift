@@ -168,7 +168,10 @@ class History { // swiftlint:disable:this type_body_length
         all.insert(itemDecorator, at: index)
       }
 
-      items = all
+      // Only update items if no search is active
+      if searchQuery.isEmpty {
+        items = all
+      }
       updateUnpinnedShortcuts()
       AppState.shared.popup.needsResize = true
     }
@@ -322,9 +325,9 @@ class History { // swiftlint:disable:this type_body_length
       all.insert(item, at: newIndex)
     }
 
-    items = all
-
+    // Clear search and let it reset naturally
     searchQuery = ""
+    items = all
     updateUnpinnedShortcuts()
     if item.isUnpinned {
       AppState.shared.scrollTarget = item.id
