@@ -60,6 +60,8 @@ class Popup {
   func reset() {
     state = .toggle
     KeyboardShortcuts.enable(.popup)
+    // Clear search query when closing (which triggers reload if needed via searchQuery didSet)
+    AppState.shared.history.searchQuery = ""
   }
 
   func close() {

@@ -1,6 +1,62 @@
 import Defaults
 import SwiftUI
 
+// MARK: - Skeleton Card
+
+struct SkeletonCardView: View {
+  @State private var isAnimating = false
+
+  private var cardWidth: CGFloat { 280 }
+  private var cardHeight: CGFloat { 200 }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      // Header skeleton
+      HStack(spacing: 6) {
+        RoundedRectangle(cornerRadius: 4)
+          .fill(Color.gray.opacity(0.2))
+          .frame(width: 16, height: 16)
+
+        RoundedRectangle(cornerRadius: 4)
+          .fill(Color.gray.opacity(0.2))
+          .frame(width: 80, height: 12)
+
+        Spacer()
+      }
+      .padding(.horizontal, 12)
+      .padding(.top, 10)
+
+      // Content skeleton
+      VStack(alignment: .leading, spacing: 6) {
+        ForEach(0..<5) { _ in
+          RoundedRectangle(cornerRadius: 3)
+            .fill(Color.gray.opacity(0.15))
+            .frame(height: 10)
+        }
+
+        RoundedRectangle(cornerRadius: 3)
+          .fill(Color.gray.opacity(0.15))
+          .frame(width: cardWidth * 0.6, height: 10)
+      }
+      .padding(.horizontal, 12)
+      .padding(.vertical, 4)
+
+      Spacer()
+    }
+    .frame(width: cardWidth, height: cardHeight)
+    .background {
+      RoundedRectangle(cornerRadius: 12)
+        .fill(Color(nsColor: .controlBackgroundColor))
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+    }
+    .opacity(isAnimating ? 0.5 : 1.0)
+    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)
+    .onAppear {
+      isAnimating = true
+    }
+  }
+}
+
 // MARK: - Filmstrip Mask
 
 struct FilmstripMask: Shape {
@@ -36,6 +92,9 @@ struct FilmstripLayoutView: View {
   @Default(.pinTo) private var pinTo
   @Default(.previewDelay) private var previewDelay
 
+  @State private var hasTriggeredLoad = false
+  @State private var showSkeletons = false
+
   private var pinnedItems: [HistoryItemDecorator] {
     appState.history.pinnedItems.filter(\.isVisible)
   }
@@ -55,6 +114,9 @@ struct FilmstripLayoutView: View {
   var body: some View {
     ScrollView(.horizontal) {
       ScrollViewReader { proxy in
+        let _ = DispatchQueue.main.async {
+          showSkeletons = true
+        }
         HStack(spacing: spacing) {
           // Pinned items section
           if !pinnedItems.isEmpty && pinTo == .top {
@@ -93,6 +155,7 @@ struct FilmstripLayoutView: View {
             HistoryItemDecorator.previewThrottler.cancel()
             appState.isKeyboardNavigating = true
             appState.selection = appState.history.unpinnedItems.first?.id ?? appState.history.pinnedItems.first?.id
+            hasTriggeredLoad = false
           } else {
             modifierFlags.flags = []
             appState.isKeyboardNavigating = true
@@ -114,6 +177,7 @@ struct FilmstripLayoutView: View {
       }
       .scrollIndicators(.visible, axes: .horizontal)
     }
+    .coordinateSpace(name: "scrollView")
     .background {
       Color.clear
         .padding(.bottom, 14)
@@ -132,6 +196,34 @@ struct FilmstripLayoutView: View {
   @ViewBuilder
   private var unpinnedItemsSection: some View {
     filmstripRow(for: unpinnedItems)
+
+    // Show skeleton placeholders if not fully loaded and not searching and we've shown them
+    if !appState.history.isFullyLoaded && searchQuery.isEmpty && showSkeletons {
+      skeletonCards
+    }
+  }
+
+  @ViewBuilder
+  private var skeletonCards: some View {
+    ForEach(0..<7, id: \.self) { index in
+      SkeletonCardView()
+        .id("skeleton-\(index)")
+        .background(
+          GeometryReader { geo in
+            Color.clear
+              .onChange(of: geo.frame(in: .named("scrollView"))) { oldFrame, newFrame in
+                let frame = newFrame
+                print("MACCYDEBUG: skeleton[\(index)] frame.minX=\(frame.minX)")
+                // Check if left edge of skeleton is within visible area (approximate screen width)
+                if index == 0 && frame.minX < 1000 {
+                  print("MACCYDEBUG: skeleton[\(index)] is in view, calling loadMoreItems()")
+                  loadMoreItems()
+                }
+              }
+          }
+        )
+        .frame(width: cardWidth, height: cardHeight)
+    }
   }
 
   @ViewBuilder
@@ -140,6 +232,22 @@ struct FilmstripLayoutView: View {
       HistoryCardView(item: item, searchQuery: searchQuery)
         .id(item.id)
         .transition(.scale.combined(with: .opacity))
+    }
+  }
+
+  private func loadMoreItems() {
+    print("MACCYDEBUG: FilmstripLayoutView.loadMoreItems() called, isFullyLoaded=\(appState.history.isFullyLoaded), searchQuery='\(searchQuery)', hasTriggeredLoad=\(hasTriggeredLoad)")
+    guard !appState.history.isFullyLoaded && searchQuery.isEmpty && !hasTriggeredLoad else {
+      print("MACCYDEBUG: FilmstripLayoutView.loadMoreItems() - guard failed, returning")
+      return
+    }
+
+    print("MACCYDEBUG: FilmstripLayoutView.loadMoreItems() - triggering load")
+    hasTriggeredLoad = true
+    Task {
+      try? await appState.history.loadMoreItems()
+      // Reset the flag so we can load again when scrolling to next batch
+      hasTriggeredLoad = false
     }
   }
 }

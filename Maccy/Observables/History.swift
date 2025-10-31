@@ -26,15 +26,31 @@ class History { // swiftlint:disable:this type_body_length
   var searchQuery: String = "" {
     didSet {
       throttler.throttle { [self] in
-        updateItems(search.search(string: searchQuery, within: all))
-
-        if searchQuery.isEmpty {
-          AppState.shared.selection = unpinnedItems.first?.id
+        // Load all items when searching (so we can search everything)
+        if !searchQuery.isEmpty && !isFullyLoaded {
+          Task {
+            try? await loadAllItems()
+            updateItems(search.search(string: searchQuery, within: all))
+            AppState.shared.highlightFirst()
+            AppState.shared.popup.needsResize = true
+          }
         } else {
-          AppState.shared.highlightFirst()
-        }
+          updateItems(search.search(string: searchQuery, within: all))
 
-        AppState.shared.popup.needsResize = true
+          if searchQuery.isEmpty {
+            // When clearing search, reset to showing only initial items
+            Task { @MainActor in
+              if isFullyLoaded {
+                try? await reload()
+              }
+            }
+            AppState.shared.selection = unpinnedItems.first?.id
+          } else {
+            AppState.shared.highlightFirst()
+          }
+
+          AppState.shared.popup.needsResize = true
+        }
       }
     }
   }
@@ -69,6 +85,15 @@ class History { // swiftlint:disable:this type_body_length
   @ObservationIgnored
   var all: [HistoryItemDecorator] = []
 
+  @ObservationIgnored
+  var isFullyLoaded = false
+
+  @ObservationIgnored
+  private var lastLoadedCount = 0
+
+  @ObservationIgnored
+  private var isCurrentlyLoading = false
+
   init() {
     Task {
       for await _ in Defaults.updates(.pasteByDefault, initial: false) {
@@ -78,13 +103,13 @@ class History { // swiftlint:disable:this type_body_length
 
     Task {
       for await _ in Defaults.updates(.sortBy, initial: false) {
-        try? await load()
+        try? await reload()
       }
     }
 
     Task {
       for await _ in Defaults.updates(.pinTo, initial: false) {
-        try? await load()
+        try? await reload()
       }
     }
 
@@ -109,16 +134,132 @@ class History { // swiftlint:disable:this type_body_length
 
   @MainActor
   func load() async throws {
-    let descriptor = FetchDescriptor<HistoryItem>()
-    let results = try Storage.shared.context.fetch(descriptor)
-    all = sorter.sort(results).map { HistoryItemDecorator($0) }
+    // Prevent concurrent loads
+    guard !isCurrentlyLoading else {
+      print("MACCYDEBUG: load() - already loading, returning")
+      return
+    }
+
+    // If we already have items, don't reload
+    guard all.isEmpty else {
+      print("MACCYDEBUG: load() - already have \(all.count) items, returning")
+      items = all
+      return
+    }
+
+    isCurrentlyLoading = true
+    defer { isCurrentlyLoading = false }
+
+    // Check total count in DB
+    let countDescriptor = FetchDescriptor<HistoryItem>()
+    let totalCount = try Storage.shared.context.fetchCount(countDescriptor)
+
+    // Load only first 7 items for instant display
+    var descriptor = FetchDescriptor<HistoryItem>(
+      sortBy: [SortDescriptor(\HistoryItem.lastCopiedAt, order: .reverse)]
+    )
+    descriptor.fetchLimit = 7
+    let initialResults = try Storage.shared.context.fetch(descriptor)
+
+    // Apply full sorting (including pin logic)
+    all = sorter.sort(initialResults).map { HistoryItemDecorator($0) }
     items = all
 
+    print("MACCYDEBUG: load() - loaded \(all.count) items, totalCount=\(totalCount)")
+
     updateShortcuts()
-    // Ensure that panel size is proper *after* loading all items.
     Task {
       AppState.shared.popup.needsResize = true
     }
+
+    // Mark as fully loaded if we got everything
+    if totalCount <= 7 {
+      isFullyLoaded = true
+    }
+    lastLoadedCount = all.count
+  }
+
+  @MainActor
+  func loadMoreItems() async throws {
+    print("MACCYDEBUG: loadMoreItems() called, currentCount=\(all.count), isFullyLoaded=\(isFullyLoaded)")
+
+    // If already fully loaded, nothing to do
+    guard !isFullyLoaded else {
+      print("MACCYDEBUG: loadMoreItems() - already fully loaded, returning")
+      return
+    }
+
+    // Get total count
+    let countDescriptor = FetchDescriptor<HistoryItem>()
+    let totalCount = try Storage.shared.context.fetchCount(countDescriptor)
+
+    // Load next 7 items
+    var descriptor = FetchDescriptor<HistoryItem>(
+      sortBy: [SortDescriptor(\HistoryItem.lastCopiedAt, order: .reverse)]
+    )
+    descriptor.fetchOffset = all.count
+    descriptor.fetchLimit = 7
+    let nextResults = try Storage.shared.context.fetch(descriptor)
+
+    print("MACCYDEBUG: loadMoreItems() - fetched \(nextResults.count) more items (offset=\(all.count))")
+
+    // Append new items
+    let newItems = sorter.sort(nextResults).map { HistoryItemDecorator($0) }
+    all.append(contentsOf: newItems)
+
+    // Only update visible items if no search is active
+    if searchQuery.isEmpty {
+      items = all
+    }
+
+    updateShortcuts()
+
+    // Check if we've loaded everything
+    if all.count >= totalCount {
+      isFullyLoaded = true
+      print("MACCYDEBUG: loadMoreItems() - now fully loaded (\(all.count) items)")
+    }
+
+    lastLoadedCount = all.count
+  }
+
+  @MainActor
+  func loadAllItems() async throws {
+    print("MACCYDEBUG: loadAllItems() called, isFullyLoaded=\(isFullyLoaded)")
+
+    // If already fully loaded, nothing to do
+    guard !isFullyLoaded else {
+      print("MACCYDEBUG: loadAllItems() - already fully loaded, returning")
+      return
+    }
+
+    // Fetch all items from DB
+    let descriptor = FetchDescriptor<HistoryItem>()
+    let allResults = try Storage.shared.context.fetch(descriptor)
+    let sorted = sorter.sort(allResults)
+
+    // Replace with all items
+    all = sorted.map { HistoryItemDecorator($0) }
+
+    print("MACCYDEBUG: loadAllItems() - loaded \(all.count) total items")
+
+    // Only update visible items if no search is active
+    if searchQuery.isEmpty {
+      items = all
+    }
+
+    updateShortcuts()
+
+    isFullyLoaded = true
+    lastLoadedCount = all.count
+  }
+
+  @MainActor
+  func reload() async throws {
+    isFullyLoaded = false
+    lastLoadedCount = 0
+    all.removeAll()
+    try await load()
   }
 
   @discardableResult
@@ -129,6 +270,7 @@ class History { // swiftlint:disable:this type_body_length
     }
 
     var removedItemIndex: Int?
+    var isNewItem = false
     if let existingHistoryItem = findSimilarItem(item) {
       if isModified(item) == nil {
         item.contents = existingHistoryItem.contents
@@ -146,6 +288,7 @@ class History { // swiftlint:disable:this type_body_length
         all.remove(at: removedItemIndex)
       }
     } else {
+      isNewItem = true
       Task {
         Notifier.notify(body: item.title, sound: .write)
       }
@@ -163,10 +306,10 @@ class History { // swiftlint:disable:this type_body_length
     } else {
       itemDecorator = HistoryItemDecorator(item)
 
-      let sortedItems = sorter.sort(all.map(\.item) + [item])
-      if let index = sortedItems.firstIndex(of: item) {
-        all.insert(itemDecorator, at: index)
-      }
+      // Just insert at beginning of unpinned items - no need to sort
+      // When user opens Maccy, load() will fetch properly sorted from DB
+      let firstUnpinnedIndex = all.firstIndex(where: { $0.isUnpinned }) ?? all.endIndex
+      all.insert(itemDecorator, at: firstUnpinnedIndex)
 
       // Only update items if no search is active
       if searchQuery.isEmpty {
@@ -175,6 +318,14 @@ class History { // swiftlint:disable:this type_body_length
       updateUnpinnedShortcuts()
       AppState.shared.popup.needsResize = true
     }
+
+    // Update the loaded count to reflect DB state
+    // The DB count increased by 1 (or stayed same if duplicate)
+    if isNewItem {
+      // New item added to DB
+      lastLoadedCount += 1
+    }
+    // If duplicate, count stayed the same (deleted old, added new = net zero)
 
     return itemDecorator
   }
@@ -336,17 +487,14 @@ class History { // swiftlint:disable:this type_body_length
 
   @MainActor
   private func findSimilarItem(_ item: HistoryItem) -> HistoryItem? {
-    let descriptor = FetchDescriptor<HistoryItem>()
-    if let all = try? Storage.shared.context.fetch(descriptor) {
-      let duplicates = all.filter({ $0 == item || $0.supersedes(item) })
-      if duplicates.count > 1 {
-        return duplicates.first(where: { $0 != item })
-      } else {
-        return isModified(item)
-      }
+    // Use cached 'all' array instead of fetching from database
+    let allItems = all.map(\.item)
+    let duplicates = allItems.filter({ $0 == item || $0.supersedes(item) })
+    if duplicates.count > 1 {
+      return duplicates.first(where: { $0 != item })
+    } else {
+      return isModified(item)
     }
-
-    return item
   }
 
   private func isModified(_ item: HistoryItem) -> HistoryItem? {

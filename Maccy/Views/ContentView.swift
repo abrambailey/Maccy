@@ -35,11 +35,14 @@ struct ContentView: View {
       .onAppear {
         searchFocused = true
       }
+      .task(id: appState.history.all.isEmpty) {
+        // Only load initial items if we don't have any
+        if appState.history.all.isEmpty {
+          try? await appState.history.load()
+        }
+      }
       .onMouseMove {
         appState.isKeyboardNavigating = false
-      }
-      .task {
-        try? await appState.history.load()
       }
     }
     .environment(appState)

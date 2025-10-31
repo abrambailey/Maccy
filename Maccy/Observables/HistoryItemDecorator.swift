@@ -17,7 +17,15 @@ class HistoryItemDecorator: Identifiable, Hashable {
   let id = UUID()
 
   var title: String = ""
-  var searchableText: String = "" // Cached for search performance
+  private var _searchableText: String?
+  var searchableText: String {
+    if let cached = _searchableText {
+      return cached
+    }
+    let text = item.previewableText.shortened(to: 10_000)
+    _searchableText = text
+    return text
+  }
   var attributedTitle: AttributedString?
 
   var isVisible: Bool = true
@@ -75,14 +83,13 @@ class HistoryItemDecorator: Identifiable, Hashable {
     self.item = item
     self.shortcuts = shortcuts
     self.title = item.title
-    self.searchableText = item.previewableText.shortened(to: 10_000)
+    // searchableText is now lazy-loaded on first access
     self.applicationImage = ApplicationImageCache.shared.getImage(item: item)
 
     synchronizeItemPin()
     synchronizeItemTitle()
-    imageGenerationTask = Task {
-      await sizeImages()
-    }
+    // Defer image generation - will be triggered when item becomes visible
+    // This prevents generating images for thousands of items on startup
   }
 
   @MainActor
@@ -102,6 +109,15 @@ class HistoryItemDecorator: Identifiable, Hashable {
       previewImage = nil
       thumbnailImage = nil
       return
+    }
+  }
+
+  func ensureImagesGenerated() {
+    guard imageGenerationTask == nil, item.image != nil else {
+      return
+    }
+    imageGenerationTask = Task {
+      await sizeImages()
     }
   }
 

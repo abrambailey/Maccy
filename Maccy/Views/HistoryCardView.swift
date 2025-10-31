@@ -130,6 +130,10 @@ struct HistoryCardView: View {
     .onTapGesture {
       appState.history.select(item)
     }
+    .onAppear {
+      // Lazy load images when card becomes visible
+      item.ensureImagesGenerated()
+    }
     .animation(.easeInOut(duration: 0.15), value: item.isSelected)
   }
 
